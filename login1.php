@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response['kode'] = 1;
                     $response['pesan'] = "Berhasil Login";
                     $response['data'] = [
-                        'id_akun' => $user->id,
+                        'id' => $user->id,
                         'nama_pengguna' => $user->nama_pengguna,
                         'no_whatsapp' => $user->no_whatsapp,
                         'kecamatan' => $user->kecamatan,
