@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $kode_otp = $_POST['kode_otp'];
     $status = $_POST['status'];
 
-    // Enkripsi password menggunakan MD5
-    $password_encrypted = md5($password);
+    // Enkripsi password menggunakan Hash
+    $password_encrypted = password_hash($password, PASSWORD_BCRYPT);
 
     $koneksi->autocommit(false);
     try {

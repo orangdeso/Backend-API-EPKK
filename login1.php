@@ -7,9 +7,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $input_role = $_POST['role'];  // Role yang dipilih dari client (Desa atau Kecamatan)
 
-    // Enkripsi password yang diinput oleh pengguna menggunakan MD5
-    $password_encrypted = md5($password);
-
     $koneksi->autocommit(false);
     try {
         // Pertama, periksa apakah nomor WhatsApp sudah terdaftar
@@ -18,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user) {
             // Nomor WhatsApp terdaftar, lanjutkan dengan pengecekan password
-            if ($user->password === $password_encrypted) {
+            if (password_verify($password, $user->password)) {
                 // Jika password cocok, cek apakah role sesuai
                 if ($user->role === $input_role) {
                     // Role sesuai, lanjutkan proses login
@@ -60,5 +57,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode($response);
     mysqli_close($koneksi);
 }
-
-//wdwdwdwd
+?>
