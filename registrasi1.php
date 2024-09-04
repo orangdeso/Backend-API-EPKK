@@ -1,5 +1,5 @@
 <?php
-
+header('Content-Type: application/json');
 include('koneksi.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

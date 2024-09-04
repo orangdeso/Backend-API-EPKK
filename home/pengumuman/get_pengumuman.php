@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 require("../../koneksi.php");
 
 $response = array();
