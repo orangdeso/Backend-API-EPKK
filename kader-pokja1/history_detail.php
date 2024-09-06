@@ -37,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $response["data"] = null;
         }
     } else {
-        // Jika parameter tidak ada, kembalikan pesan kesalahan
         $response["kode"] = 0;
         $response["message"] = "Parameter id_kader_pokja1 not found";
         $response["data"] = null;

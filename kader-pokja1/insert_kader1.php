@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $PKBN = $_POST['PKBN'];
     $PKDRT = $_POST['PKDRT'];
     $pola_asuh = $_POST['pola_asuh'];
-    $user_id = $_POST['id_user'];
+    $id_user = $_POST['id_user'];
     $tanggal = date('Y-m-d');
     $role = $_POST['role'];
     $role_bidang = $_POST['role_bidang'];
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // Insert data ke dalam database
         $query = "INSERT INTO laporan_kader_pokja1 (PKBN, PKDRT, pola_asuh, status, tanggal, id_user, waktu, role, role_bidang, created_at) 
-                  VALUES ('$PKBN', '$PKDRT', '$pola_asuh', 'Proses', '$tanggal', '$user_id', '$waktu', '$role', '$role_bidang', '$created_at')";
+                  VALUES ('$PKBN', '$PKDRT', '$pola_asuh', 'Proses', '$tanggal', '$id_user', '$waktu', '$role', '$role_bidang', '$created_at')";
 
         $result = mysqli_query($koneksi, $query);
         $check = mysqli_affected_rows($koneksi);
