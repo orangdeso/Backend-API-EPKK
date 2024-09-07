@@ -3,6 +3,14 @@ header('Content-Type: application/json');
 require("../koneksi.php");
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (!$koneksi) {
+        // Jika koneksi database gagal
+        $response['kode'] = 0;
+        $response['message'] = "Server sedang bermasalah, silakan coba lagi nanti.";
+        echo json_encode($response);
+        exit(); // Keluar dari script setelah mengirim respons
+    }
+
     $PKBN = $_POST['PKBN'];
     $PKDRT = $_POST['PKDRT'];
     $pola_asuh = $_POST['pola_asuh'];
@@ -26,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($check > 0) {
             // Jika data berhasil masuk, ambil data yang baru saja dimasukkan
-            $selectQuery = "SELECT * FROM laporan_kader_pokja1 WHERE id_user = '$user_id' AND created_at = '$created_at'";
+            $selectQuery = "SELECT * FROM laporan_kader_pokja1 WHERE id_user = '$id_user' AND created_at = '$created_at'";
             $selectResult = mysqli_query($koneksi, $selectQuery);
             $data = mysqli_fetch_assoc($selectResult);
 
@@ -39,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } catch (Exception $e) {
         $response['kode'] = 0;
-        $response['message'] = $e->getMessage();
+        $response['message'] = "Server sedang bermasalah, silakan coba lagi nanti.";
     }
 
     echo json_encode($response);
