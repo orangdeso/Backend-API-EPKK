@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-include('koneksi.php');
+require 'config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $no_whatsapp = $_POST['no_whatsapp'];
