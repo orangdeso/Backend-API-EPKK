@@ -9,4 +9,4 @@ JOIN
     village ON subdistrict.id = village.id_subdistrict
 WHERE 
     subdistrict.id = 20;
-    info
+    info, info
