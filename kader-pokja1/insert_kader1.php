@@ -1,9 +1,11 @@
 <?php
 header('Content-Type: application/json');
 require '../config/config.php';
-require_once __DIR__ . '/../vendor/autoload.php'; // Autoload jika menggunakan library
 
-use Ramsey\Uuid\Uuid;
+function generateCustomUUID() {
+    $randomString = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 7); // Membuat 7 karakter acak
+    return 'KP1' . $randomString; 
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!$koneksi) {
@@ -28,8 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $created_at = date("Y-m-d H:i:s", $timestamp);
     $waktu = date("H:i", $timestamp);
 
-    // Custom UUID dengan format 'KP1'
-    $uuid = 'KP1-' . Uuid::uuid4()->toString();
+    $uuid = generateCustomUUID();
 
     try {
         // Insert data ke dalam database
@@ -40,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $check = mysqli_affected_rows($koneksi);
 
         if ($check > 0) {
-            // Ambil data yang baru saja dimasukkan berdasarkan UUID
             $selectQuery = "
                 SELECT 
                     laporan_kader_pokja1.uuid,
@@ -64,11 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $selectResult = mysqli_query($koneksi, $selectQuery);
             $data = mysqli_fetch_assoc($selectResult);
 
-            // Response jika berhasil
             $response['statusCode'] = 200;
             $response['message'] = "Successfully uploaded laporan kader pokja I";
             $response['data'] = [
-                "uuid" => $data['uuid'],
+                "id" => $data['uuid'],
                 "PKBN" => $data['PKBN'],
                 "PKDRT" => $data['PKDRT'],
                 "pola_asuh" => $data['pola_asuh'],
@@ -83,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 ],
                 "organization" => [
                     "uuid" => $data['organization_uuid'],
-                    "name" => $data['organization_name']
-                ]
+                    "name" => $data['organization_name'],
+                ],
             ];
             $response['error'] = null;
         } else {
@@ -95,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $response['error'] = ['message' => 'Data insertion failed'];
         }
     } catch (Exception $e) {
-        // Jika terjadi exception
         $response['statusCode'] = 500;
         $response['message'] = "An error occurred while processing the request.";
         $response['data'] = null;
