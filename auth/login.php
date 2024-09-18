@@ -1,60 +1,122 @@
 <?php
 header('Content-Type: application/json');
-require 'config/config.php';
+require '../config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $no_whatsapp = $_POST['no_whatsapp'];
+    $phone_number = $_POST['phone_number'];
     $password = $_POST['password'];
-    $input_role = $_POST['role'];  // Role yang dipilih dari client (Desa atau Kecamatan)
+    $input_role = $_POST['role'];  // Role yang dipilih dari client
 
     $koneksi->autocommit(false);
     try {
-        // Pertama, periksa apakah nomor WhatsApp sudah terdaftar
-        $result = $koneksi->query("SELECT * FROM penggunas WHERE no_whatsapp = '$no_whatsapp'");
+        $result = $koneksi->query("SELECT * FROM users_mobile WHERE phone_number = '$phone_number'");
         $user = mysqli_fetch_object($result);
 
         if ($user) {
-            // Nomor WhatsApp terdaftar, lanjutkan dengan pengecekan password
             if (password_verify($password, $user->password)) {
-                // Jika password cocok, cek apakah role sesuai
-                if ($user->role === $input_role) {
+                if ($user->id_role == $input_role) {
+                    $query = "
+                        SELECT 
+                            users_mobile.uuid,
+                            users_mobile.phone_number,
+                            users_mobile.full_name,
+                            users_mobile.status,
+                            users_mobile.created_at,
+                            users_mobile.updated_at,
+                            subdistrict.uuid AS subdistrict_uuid,
+                            subdistrict.name AS subdistrict_name,
+                            village.uuid AS village_uuid,
+                            village.name AS village_name,
+                            role_users_mobile.uuid AS role_uuid,
+                            role_users_mobile.name AS role_name,
+                            role_organization.uuid AS organization_uuid,
+                            role_organization.name AS organization_name
+                        FROM users_mobile
+                        LEFT JOIN subdistrict ON users_mobile.id_subdistrict = subdistrict.id
+                        LEFT JOIN village ON users_mobile.id_village = village.id
+                        LEFT JOIN role_users_mobile ON users_mobile.id_role = role_users_mobile.id
+                        LEFT JOIN role_organization ON users_mobile.id_organization = role_organization.id
+                        WHERE users_mobile.phone_number = '$phone_number'
+                    ";
+
+                    $result_detail = $koneksi->query($query);
+                    $data_user = $result_detail->fetch_assoc();
+
                     // Role sesuai, lanjutkan proses login
-                    $response['kode'] = 1;
-                    $response['pesan'] = "Berhasil Login";
-                    $response['data'] = [
-                        'id' => $user->id,
-                        'nama_pengguna' => $user->nama_pengguna,
-                        'no_whatsapp' => $user->no_whatsapp,
-                        'kecamatan' => $user->kecamatan,
-                        'desa' => $user->desa,
-                        'role' => $user->role,
-                        'role_bidang' => $user->role_bidang,
-                        'status' => $user->status
+                    $response = [
+                        'statusCode' => 200,
+                        'message' => 'Success Login',
+                        'user' => [
+                            'id' => $data_user['uuid'],
+                            'fullName' => $data_user['full_name'],
+                            'phoneNumber' => $data_user['phone_number'],
+                            'status' => $data_user['status'],
+                            'createdAt' => $data_user['created_at'],
+                            'updatedAt' => $data_user['updated_at'],
+                            'subdistrict' => [
+                                'id' => $data_user['subdistrict_uuid'],
+                                'name' => $data_user['subdistrict_name']
+                            ],
+                            'village' => [
+                                'id' => $data_user['village_uuid'],
+                                'name' => $data_user['village_name']
+                            ],
+                            'role' => [
+                                'id' => $data_user['role_uuid'],
+                                'name' => $data_user['role_name']
+                            ],
+                            'organization' => [
+                                'id' => $data_user['organization_uuid'],
+                                'name' => $data_user['organization_name'],
+                            ],
+                        ],
+                        'error' => null
                     ];
                 } else {
+                    // Query untuk mendapatkan nama role dari role_users_mobile
+                    $role_query = "SELECT name FROM role_users_mobile WHERE id = '$user->id_role'";
+                    $role_result = $koneksi->query($role_query);
+                    $role_data = $role_result->fetch_assoc();
+                    $role_name = $role_data['name'];
+
                     // Role tidak sesuai
-                    $response['kode'] = 4;
-                    $response['pesan'] = "Role anda adalah " . $user->role . ", bukan " . $input_role;
+                    $response = [
+                        'statusCode' => 403,
+                        'message' => 'Role mismatch. Your role is ' . $role_name . ', but you tried to login as ' . $input_role,
+                        'data' => null,
+                        'error' => ['message' => 'Role mismatch']
+                    ];
                 }
             } else {
                 // Jika password tidak cocok
-                $response['kode'] = 3;
-                $response['pesan'] = "Password anda salah";
+                $response = [
+                    'statusCode' => 401,
+                    'message' => 'Incorrect password',
+                    'data' => null,
+                    'error' => ['message' => 'Invalid password']
+                ];
             }
         } else {
             // Nomor WhatsApp tidak terdaftar, tidak perlu memeriksa password
-            $response['kode'] = 2;
-            $response['pesan'] = "Nomor WhatsApp tidak terdaftar";
+            $response = [
+                'statusCode' => 404,
+                'message' => 'Phone number not registered',
+                'data' => null,
+                'error' => ['message' => 'User not found']
+            ];
         }
 
         $koneksi->commit();
 
     } catch (Exception $e) {
-        $response['kode'] = 0;
-        $response['pesan'] = $e->getMessage();
+        $response = [
+            'statusCode' => 500,
+            'message' => $e->getMessage(),
+            'data' => null,
+            'error' => ['message' => 'Failed to login due to an exception']
+        ];
         $koneksi->rollback();
     }
     echo json_encode($response);
     mysqli_close($koneksi);
 }
-?>

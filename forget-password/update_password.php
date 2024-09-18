@@ -1,33 +1,66 @@
 <?php
 header('Content-Type: application/json');
-require("../koneksi.php");
+require '../config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-    // Mendapatkan data input dari request PUT
     parse_str(file_get_contents("php://input"), $_PUT);
-    $no_whatsapp = $_PUT["no_whatsapp"];
-    $password = $_PUT["password"];
+    $phone_number = $_PUT["phone_number"];
+    $new_password = $_PUT["password"];
 
-    // Enkripsi password menggunakan password_hash
-    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-
-    // Menggunakan prepared statement untuk mencegah SQL injection
-    $stmt = $koneksi->prepare("UPDATE penggunas SET password = ? WHERE no_whatsapp = ?");
-    $stmt->bind_param("ss", $hashed_password, $no_whatsapp);
+    $stmt = $koneksi->prepare("SELECT password FROM users_mobile WHERE phone_number = ?");
+    $stmt->bind_param("s", $phone_number);
     $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        $old_password_hashed = $user['password'];
 
-    $check = $stmt->affected_rows;
+        if (password_verify($new_password, $old_password_hashed)) {
+            $response = [
+                'statusCode' => 400,
+                'message' => 'New password cannot be the same as the old password.',
+                'data' => null,
+                'error' => ['message' => 'No changes made.']
+            ];
+        } else {
+            $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
 
-    if ($check > 0) {
-        $response['kode'] = 1;
-        $response["message"] = "Password berhasil dirubah";
+            $stmt_update = $koneksi->prepare("UPDATE users_mobile SET password = ? WHERE phone_number = ?");
+            $stmt_update->bind_param("ss", $hashed_password, $phone_number);
+            $stmt_update->execute();
+
+            $check = $stmt_update->affected_rows;
+
+            if ($check > 0) {
+                $response = [
+                    'statusCode' => 200,
+                    'message' => 'Password updated successfully.',
+                    'data' => [],
+                    'error' => null
+                ];
+            } else {
+                $response = [
+                    'statusCode' => 404,
+                    'message' => 'Phone number not found or no changes made.',
+                    'data' => null,
+                    'error' => ['message' => 'User with this phone number was not found.']
+                ];
+            }
+
+            $stmt_update->close();
+        }
     } else {
-        $response["kode"] = 0;
-        $response["message"] = "Data Tidak Tersedia";
+        $response = [
+            'statusCode' => 404,
+            'message' => 'Phone number not found.',
+            'data' => null,
+            'error' => ['message' => 'User with this phone number was not found.']
+        ];
     }
 
     echo json_encode($response);
+
     $stmt->close();
     $koneksi->close();
 }
-?>
