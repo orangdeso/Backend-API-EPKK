@@ -3,8 +3,8 @@ header('Content-Type: application/json');
 require '../config/config.php';
 
 function generateCustomUUID() {
-    $randomString = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 7); // Membuat 7 karakter acak
-    return 'KP1' . $randomString; 
+    $randomString = substr(str_shuffle("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 6); // Membuat 7 karakter acak
+    return 'KP1-' . $randomString; 
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -23,19 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id_user = $_POST['id_user'];
     $id_role = $_POST['id_role'];
     $id_organization = $_POST['id_organization'];
-    $tanggal = date('Y-m-d');
 
     date_default_timezone_set('Asia/Jakarta');
     $timestamp = time();
     $created_at = date("Y-m-d H:i:s", $timestamp);
-    $waktu = date("H:i", $timestamp);
 
     $uuid = generateCustomUUID();
 
     try {
         // Insert data ke dalam database
-        $query = "INSERT INTO laporan_kader_pokja1 (uuid, PKBN, PKDRT, pola_asuh, status, tanggal, waktu, created_at, updated_at, id_user, id_role, id_organization) 
-                  VALUES ('$uuid', '$PKBN', '$PKDRT', '$pola_asuh', 'Proses', '$tanggal', '$waktu', '$created_at', '$created_at', '$id_user', '$id_role', '$id_organization')";
+        $query = "INSERT INTO laporan_kader_pokja1 (uuid, id_user, PKBN, PKDRT, pola_asuh, status, created_at, updated_at, id_role, id_organization) 
+                  VALUES ('$uuid', '$id_user', '$PKBN', '$PKDRT', '$pola_asuh', 'Proses', '$created_at', '$created_at', '$id_role', '$id_organization')";
 
         $result = mysqli_query($koneksi, $query);
         $check = mysqli_affected_rows($koneksi);
@@ -48,8 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     laporan_kader_pokja1.PKDRT,
                     laporan_kader_pokja1.pola_asuh,
                     laporan_kader_pokja1.status,
-                    laporan_kader_pokja1.tanggal,
-                    laporan_kader_pokja1.waktu,
                     laporan_kader_pokja1.created_at,
                     laporan_kader_pokja1.updated_at,
                     role_users_mobile.uuid AS role_uuid,
@@ -65,31 +61,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $data = mysqli_fetch_assoc($selectResult);
 
             $response['statusCode'] = 200;
-            $response['message'] = "Successfully uploaded laporan kader pokja I";
+            $response['message'] = "Successfully uploaded report kader pokja I";
             $response['data'] = [
                 "id" => $data['uuid'],
                 "PKBN" => $data['PKBN'],
                 "PKDRT" => $data['PKDRT'],
                 "pola_asuh" => $data['pola_asuh'],
                 "status" => $data['status'],
-                "tanggal" => $data['tanggal'],
-                "waktu" => $data['waktu'],
                 "created_at" => $data['created_at'],
                 "updated_at" => $data['updated_at'],
                 "role" => [
-                    "uuid" => $data['role_uuid'],
+                    "id" => $data['role_uuid'],
                     "name" => $data['role_name']
                 ],
                 "organization" => [
-                    "uuid" => $data['organization_uuid'],
+                    "id" => $data['organization_uuid'],
                     "name" => $data['organization_name'],
                 ],
             ];
             $response['error'] = null;
         } else {
-            // Jika insert gagal (misal data tidak berhasil dimasukkan)
             $response['statusCode'] = 500;
-            $response['message'] = "Failed to upload laporan kader pokja I";
+            $response['message'] = "Failed to upload report kader pokja I";
             $response['data'] = null;
             $response['error'] = ['message' => 'Data insertion failed'];
         }
