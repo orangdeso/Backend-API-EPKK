@@ -3,9 +3,12 @@ header('Content-Type: application/json');
 require '../config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $phone_number = $_POST['phone_number'];
-    $password = $_POST['password'];
-    $input_role = $_POST['role'];  // Role yang dipilih dari client
+    $json = file_get_contents('php://input');
+    $requestData = json_decode($json, true);
+
+    $phone_number = $requestData['phone_number'];
+    $password = $requestData['password'];
+    $input_role = $requestData['role'];
 
     $koneksi->autocommit(false);
     try {
@@ -46,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response = [
                         'statusCode' => 200,
                         'message' => 'Success Login',
-                        'user' => [
+                        'data' => [
                             'id' => $data_user['uuid'],
                             'fullName' => $data_user['full_name'],
                             'phoneNumber' => $data_user['phone_number'],
@@ -72,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ],
                         'error' => null
                     ];
+                    http_response_code(200);
                 } else {
                     // Query untuk mendapatkan nama role dari role_users_mobile
                     $role_query = "SELECT name FROM role_users_mobile WHERE id = '$user->id_role'";
@@ -86,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'data' => null,
                         'error' => ['message' => 'Role mismatch']
                     ];
+                    http_response_code(403);
                 }
             } else {
                 // Jika password tidak cocok
@@ -95,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'data' => null,
                     'error' => ['message' => 'Invalid password']
                 ];
+                http_response_code(401);
             }
         } else {
             // Nomor WhatsApp tidak terdaftar, tidak perlu memeriksa password
@@ -104,10 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'data' => null,
                 'error' => ['message' => 'User not found']
             ];
+            http_response_code(404);
         }
 
         $koneksi->commit();
-
     } catch (Exception $e) {
         $response = [
             'statusCode' => 500,
@@ -115,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'data' => null,
             'error' => ['message' => 'Failed to login due to an exception']
         ];
+        http_response_code(500);
         $koneksi->rollback();
     }
     echo json_encode($response);
