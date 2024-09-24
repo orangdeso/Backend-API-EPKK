@@ -3,12 +3,11 @@ header('Content-Type: application/json');
 require '../config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $json = file_get_contents('php://input');
-    $requestData = json_decode($json, true);
+    $input = json_decode(file_get_contents("php://input"), true);
 
-    $phone_number = $requestData['phone_number'];
-    $password = $requestData['password'];
-    $input_role = $requestData['role'];
+    $phone_number = $input['phone_number'];
+    $password = $input['password'];
+    $input_role = $input['role'];
 
     $koneksi->autocommit(false);
     try {
@@ -45,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $result_detail = $koneksi->query($query);
                     $data_user = $result_detail->fetch_assoc();
 
-                    // Role sesuai, lanjutkan proses login
                     $response = [
                         'statusCode' => 200,
                         'message' => 'Success Login',
@@ -77,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ];
                     http_response_code(200);
                 } else {
-                    // Query untuk mendapatkan nama role dari role_users_mobile
                     $role_query = "SELECT name FROM role_users_mobile WHERE id = '$user->id_role'";
                     $role_result = $koneksi->query($role_query);
                     $role_data = $role_result->fetch_assoc();
@@ -86,9 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Role tidak sesuai
                     $response = [
                         'statusCode' => 403,
-                        'message' => 'Role mismatch. Your role is ' . $role_name . ', but you tried to login as ' . $input_role,
                         'data' => null,
-                        'error' => ['message' => 'Role mismatch']
+                        'error' => ['message' => 'Role mismatch ' . $role_name . ', Please check again'] 
                     ];
                     http_response_code(403);
                 }
@@ -96,9 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Jika password tidak cocok
                 $response = [
                     'statusCode' => 401,
-                    'message' => 'Incorrect password',
                     'data' => null,
-                    'error' => ['message' => 'Invalid password']
+                    'error' => ['message' => 'Incorrect password']
                 ];
                 http_response_code(401);
             }
@@ -106,9 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Nomor WhatsApp tidak terdaftar, tidak perlu memeriksa password
             $response = [
                 'statusCode' => 404,
-                'message' => 'Phone number not registered',
                 'data' => null,
-                'error' => ['message' => 'User not found']
+                'error' => ['message' => 'Phone number not registered']
             ];
             http_response_code(404);
         }
@@ -117,9 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Exception $e) {
         $response = [
             'statusCode' => 500,
-            'message' => $e->getMessage(),
             'data' => null,
-            'error' => ['message' => 'Failed to login due to an exception']
+            'error' => ['message' => 'Server error.'. $e->getMessage()]
         ];
         http_response_code(500);
         $koneksi->rollback();

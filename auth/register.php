@@ -8,16 +8,18 @@ use Ramsey\Uuid\Uuid;
 ob_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = json_decode(file_get_contents("php://input"), true);
+    
     $uuid = Uuid::uuid4()->toString(); 
-    $full_name = $_POST['full_name'];
-    $phone_number = $_POST['phone_number'];
-    $password = $_POST['password'];
-    $kode_otp = $_POST['kode_otp'];
-    $status = $_POST['status'];
-    $id_subdistrict = $_POST['id_subdistrict'];
-    $id_village = $_POST['id_village'];
-    $id_role = $_POST['id_role'];
-    $id_organization = $_POST['id_organization'];
+    $full_name = $input['full_name'];
+    $phone_number = $input['phone_number'];
+    $password = $input['password'];
+    $kode_otp = $input['kode_otp'];
+    $status = $input['status'];
+    $id_subdistrict = $input['id_subdistrict'];
+    $id_village = $input['id_village'];
+    $id_role = $input['id_role'];
+    $id_organization = $input['id_organization'];
     
     date_default_timezone_set('Asia/Jakarta');
     $created_at = date('Y-m-d H:i:s');
@@ -27,10 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($cekNumberPhone->num_rows > 0) {
         $response = [
             'statusCode' => 409,
-            'message' => 'Phone number already registered.',
             'data' => null,
             'error' => ['message' => 'The phone number is already in use. Please use another number.']
         ];
+        http_response_code(409);
         echo json_encode($response);
         exit;
     }
@@ -101,23 +103,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ],
                 'error' => null
             ];
+            http_response_code(200);
         } else {
             $response = [
                 'statusCode' => 404,
-                'message' => 'User not found.',
                 'data' => null,
                 'error' => ['message' => 'User data could not be retrieved.']
             ];
+            http_response_code(404);
         }
 
         $koneksi->commit();
     } catch (Exception $e) {
         $response = [
             'statusCode' => 500,
-            'message' => $e->getMessage(),
             'data' => null,
-            'error' => ['message' => 'Failed to create account due to an exception.']
+            'error' => ['message' => 'Failed to create account due to an exception.' . $e->getMessage()]
         ];
+        http_response_code(500);
         $koneksi->rollback();
     }
 
