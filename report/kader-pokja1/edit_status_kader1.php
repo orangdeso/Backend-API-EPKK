@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require '../config/config.php';
+require '../../config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     if (isset($_GET['id'])) {

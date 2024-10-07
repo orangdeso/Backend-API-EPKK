@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require '../config/config.php';
+require '../../config/config.php';
 
 function generateCustomUUID() {
     $randomString = substr(str_shuffle("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 6); // Membuat 7 karakter acak
